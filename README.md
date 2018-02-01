@@ -1,5 +1,5 @@
-# My Neural Transfer
-A simple practice of neural style transfer
+# My Neural Style Transfer
+A simple practice of neural style transfer.
 
 This code is just for neural style transfer test based on Keras `neural_style_transfer.py`,
 and the original Keras project please click [here](https://github.com/keras-team/keras)！
@@ -7,7 +7,7 @@ and the original Keras project please click [here](https://github.com/keras-team
 ## Environments
 
 - Linux Ubuntu 16.04 + Intel Core i7 + GTX960M(渣本)
-- Anaconda3 + Tensorflow 1.2 + Keras 2.0
+- Anaconda 3 + Tensorflow 1.2 + Keras 2.0
 - Pre-trained VGG19 network (content feature layer is `[block5_conv2]`, style feature layer 
 is `['block1_conv2', 'block2_conv2', 'block3_conv2', 'block4_conv2', 'block5_conv2']`)
 
@@ -21,7 +21,7 @@ Use `--content_weight` to change the the weight of content loss(default 0.025).
 
 Use `--style_weight` to change the the weight of style loss(default 1.0).
 
-Use '--style2_reference_image_path' to get combine style result
+Use `--style2_reference_image_path` to get combine style result.
 
 ## Results
 
