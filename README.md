@@ -21,8 +21,14 @@ Use `--style_weight` to change the the weight of style loss(default 1.0).
 The basic results are as follow(the subgraph from left to right is the origin image, style image and 
 stylized image respectively):
 ![Basic Results](imgs/output/uestc.jpg)
-![Basic Results](imgs/output/uestc_style1.jpg)
-![Basic Results](imgs/output/uestc_style1.jpg)
+![Basic Results](imgs/output/style1.jpg)
+![Basic Results](imgs/output/uestc_style1.png)
+![Basic Results](imgs/output/uestc.jpg)
+![Basic Results](imgs/output/style4.jpeg)
+![Basic Results](imgs/output/uestc_style2.png)
+![Basic Results](imgs/output/person.jpeg)
+![Basic Results](imgs/output/style3.jpeg)
+![Basic Results](imgs/output/person_style.png)
 
 The second experiment try to use two style images to stylize the origin image at the same time,
 the results are as follow：
