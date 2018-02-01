@@ -9,7 +9,7 @@ and the original Keras project please click [here](https://github.com/keras-team
 - Linux Ubuntu 16.04 + Intel Core i7 + GTX960M(渣本)
 - Anaconda3 + Tensorflow 1.2 + Keras 2.0
 - Pre-trained VGG19 network (content feature layer is `[block5_conv2]`, style feature layer 
-is ['block1_conv2', 'block2_conv2', 'block3_conv2', 'block4_conv2', 'block5_conv2'])
+is `['block1_conv2', 'block2_conv2', 'block3_conv2', 'block4_conv2', 'block5_conv2']`)
 
 ## Running
 
