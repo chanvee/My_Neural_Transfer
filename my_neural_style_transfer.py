@@ -76,12 +76,18 @@ parser.add_argument('--style_weight', type=float, default=1.0, required=False,
                     help='Style weight.')
 parser.add_argument('--tv_weight', type=float, default=1.0, required=False,
                     help='Total Variation weight.')
+parser.add_argument('--style2_reference_image_path', metavar='ref2', default=None, type=str,
+                    help='Path to the style reference image2.', required=False)
+parser.add_argument('--combine_style', type=float, default=False, required=False,
+                    help='whether combine style.')
 
 args = parser.parse_args()
 base_image_path = args.base_image_path
 style_reference_image_path = args.style_reference_image_path
 result_prefix = args.result_prefix
 iterations = args.iter
+is_combine_style = args.combine_style
+style2_reference_image_path = args.style2_reference_image_path
 
 # these are the weights of the different loss components
 total_variation_weight = args.tv_weight
@@ -99,6 +105,22 @@ img_ncols = int(width * img_nrows / height)
 def preprocess_image(image_path):
     img = load_img(image_path, target_size=(img_nrows, img_ncols))
     img = img_to_array(img)
+    img = np.expand_dims(img, axis=0)
+    img = vgg19.preprocess_input(img)
+    # img = preprocess_input(img)
+    return img
+
+
+def preprocess_combine_style_image(style_image_path1, style_image_path2):
+    img1 = load_img(style_image_path1, target_size=(img_nrows, img_ncols))
+    img1 = img_to_array(img1)
+
+    img2 = load_img(style_image_path2, target_size=(img_nrows, img_ncols))
+    img2 = img_to_array(img2)
+
+    # img  = np.concatenate([img1[:, 0:int(img_ncols/2), :], img2[:, int(img_ncols/2):, :]], axis=1)
+    img = np.concatenate([img1[0:int(img_nrows/2), :, :], img2[int(img_nrows/2):, :, :]], axis=0)
+    # img = img1 + img2
     img = np.expand_dims(img, axis=0)
     img = vgg19.preprocess_input(img)
     return img
@@ -121,9 +143,21 @@ def deprocess_image(x):
     x = np.clip(x, 0, 255).astype('uint8')
     return x
 
+
 # get tensor representations of our images
+# choose whether combine style by args
 base_image = K.variable(preprocess_image(base_image_path))
-style_reference_image = K.variable(preprocess_image(style_reference_image_path))
+print(is_combine_style)
+print(style2_reference_image_path)
+if is_combine_style is False and style2_reference_image_path is None:
+    style_reference_image = K.variable(preprocess_image(style_reference_image_path))
+else:
+    style_reference_image = K.variable(preprocess_combine_style_image(style_reference_image_path,
+                                                                      style2_reference_image_path))
+    # 保存中间图片
+    img = deprocess_image(preprocess_combine_style_image(style_reference_image_path, style2_reference_image_path))
+    fname = './imgs/tmp1.png'
+    imsave(fname, img)
 
 # this will contain our generated image
 if K.image_data_format() == 'channels_first':
@@ -138,16 +172,17 @@ input_tensor = K.concatenate([base_image,
 
 # build the VGG16 network with our 3 images as input
 # the model will be loaded with pre-trained ImageNet weights
-# model = vgg19.VGG19(input_tensor=input_tensor,
-#                     weights='imagenet', include_top=False)
-model = InceptionV3(input_tensor=input_tensor, weights='imagenet', include_top=False)
+model = vgg19.VGG19(input_tensor=input_tensor,
+                    weights='imagenet', include_top=False)
+# K.set_learning_phase(1)
+# model = InceptionV3(input_tensor=input_tensor, weights='imagenet', include_top=False)
 print('Model loaded.')
 
 # get the symbolic outputs of each "key" layer (we gave them unique names).
 outputs_dict = dict([(layer.name, layer.output) for layer in model.layers])
 
 for layer in model.layers:
-    print(layer.name)
+    print(layer.name, layer.output)
 
 # compute the neural style loss
 # first we need to define 4 util functions
@@ -205,24 +240,25 @@ def total_variation_loss(x):
 
 # combine these loss functions into a single scalar
 loss = K.variable(0.)
-# layer_features = outputs_dict['block5_conv2']
-layer_features = outputs_dict['activation_94']
+
+layer_features = outputs_dict['block5_conv2']
+# layer_features = outputs_dict['activation_94']
 base_image_features = layer_features[0, :, :, :]
 combination_features = layer_features[2, :, :, :]
 loss += content_weight * content_loss(base_image_features,
                                       combination_features)
 
-# feature_layers = ['block1_conv1', 'block2_conv1',
-#                   'block3_conv1', 'block4_conv1',
-#                   'block5_conv1']
-feature_layers = ['activation_90', 'activation_91', 'activation_92', 'activation_93']
+feature_layers = ['block1_conv2', 'block2_conv2',
+                  'block3_conv2', 'block4_conv2',
+                  'block5_conv2']
+# feature_layers = ['activation_90', 'activation_91', 'activation_92', 'activation_93']
 for layer_name in feature_layers:
     layer_features = outputs_dict[layer_name]
     style_reference_features = layer_features[1, :, :, :]
     combination_features = layer_features[2, :, :, :]
     sl = style_loss(style_reference_features, combination_features)
     loss += (style_weight / len(feature_layers)) * sl
-# loss += total_variation_weight * total_variation_loss(combination_image)
+loss += total_variation_weight * total_variation_loss(combination_image)
 
 # get the gradients of the generated image wrt the loss
 grads = K.gradients(loss, combination_image)
