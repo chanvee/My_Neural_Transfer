@@ -78,15 +78,12 @@ parser.add_argument('--tv_weight', type=float, default=1.0, required=False,
                     help='Total Variation weight.')
 parser.add_argument('--style2_reference_image_path', metavar='ref2', default=None, type=str,
                     help='Path to the style reference image2.', required=False)
-parser.add_argument('--combine_style', type=float, default=False, required=False,
-                    help='whether combine style.')
 
 args = parser.parse_args()
 base_image_path = args.base_image_path
 style_reference_image_path = args.style_reference_image_path
 result_prefix = args.result_prefix
 iterations = args.iter
-is_combine_style = args.combine_style
 style2_reference_image_path = args.style2_reference_image_path
 
 # these are the weights of the different loss components
@@ -118,8 +115,8 @@ def preprocess_combine_style_image(style_image_path1, style_image_path2):
     img2 = load_img(style_image_path2, target_size=(img_nrows, img_ncols))
     img2 = img_to_array(img2)
 
-    # img  = np.concatenate([img1[:, 0:int(img_ncols/2), :], img2[:, int(img_ncols/2):, :]], axis=1)
-    img = np.concatenate([img1[0:int(img_nrows/2), :, :], img2[int(img_nrows/2):, :, :]], axis=0)
+    img  = np.concatenate([img1[:, 0:int(img_ncols/2), :], img2[:, int(img_ncols/2):, :]], axis=1)
+    # img = np.concatenate([img1[0:int(img_nrows/2), :, :], img2[int(img_nrows/2):, :, :]], axis=0)
     # img = img1 + img2
     img = np.expand_dims(img, axis=0)
     img = vgg19.preprocess_input(img)
@@ -147,9 +144,7 @@ def deprocess_image(x):
 # get tensor representations of our images
 # choose whether combine style by args
 base_image = K.variable(preprocess_image(base_image_path))
-print(is_combine_style)
-print(style2_reference_image_path)
-if is_combine_style is False and style2_reference_image_path is None:
+if style2_reference_image_path is None:
     style_reference_image = K.variable(preprocess_image(style_reference_image_path))
 else:
     style_reference_image = K.variable(preprocess_combine_style_image(style_reference_image_path,
